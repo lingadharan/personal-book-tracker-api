@@ -1,5 +1,4 @@
-import mongoose, { Schema, type Document } from "mongoose";
-
+import mongoose, { Schema, type Document } from 'mongoose';
 
 export interface IBook extends Document {
   title: string;
@@ -7,14 +6,13 @@ export interface IBook extends Document {
   currentPage?: number;
   durationToComplete?: string;
   suggestedBy?: string;
-  readStatus?: "completed" | "need-to-plan" | "in-progress";
+  readStatus?: 'completed' | 'need-to-plan' | 'in-progress';
   notes?: string;
-  category: "reading" | "read" | "interest" | "favourite";
+  category: 'reading' | 'read' | 'interest' | 'favourite';
 }
 
 const bookSchema = new Schema<IBook>(
   {
-
     title: {
       type: String,
       required: true,
@@ -46,7 +44,7 @@ const bookSchema = new Schema<IBook>(
 
     readStatus: {
       type: String,
-      enum: ["completed", "need-to-plan", "in-progress"],
+      enum: ['completed', 'need-to-plan', 'in-progress'],
       default: null,
     },
 
@@ -59,7 +57,7 @@ const bookSchema = new Schema<IBook>(
     category: {
       type: String,
       required: true,
-      enum: ["reading", "read", "interest", "favourite"],
+      enum: ['reading', 'read', 'interest', 'favourite'],
       trim: true,
     },
   },
@@ -68,6 +66,6 @@ const bookSchema = new Schema<IBook>(
   }
 );
 
-const Book = mongoose.model<IBook>("Book", bookSchema);
+const Book = mongoose.model<IBook>('Book', bookSchema);
 
 export default Book;

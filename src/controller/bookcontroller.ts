@@ -18,13 +18,21 @@ function validateBook(book: any, isUpdate = false): string | null {
 
   // Required fields: Must be present on creation. If present on update, must be non-empty string.
   if (!isUpdate || book.title !== undefined) {
-    if (!book.title || typeof book.title !== 'string' || book.title.trim() === '') {
+    if (
+      !book.title ||
+      typeof book.title !== 'string' ||
+      book.title.trim() === ''
+    ) {
       return 'title is required and must be a non-empty string';
     }
   }
 
   if (!isUpdate || book.author !== undefined) {
-    if (!book.author || typeof book.author !== 'string' || book.author.trim() === '') {
+    if (
+      !book.author ||
+      typeof book.author !== 'string' ||
+      book.author.trim() === ''
+    ) {
       return 'author is required and must be a non-empty string';
     }
   }
@@ -43,7 +51,10 @@ function validateBook(book: any, isUpdate = false): string | null {
     }
   }
 
-  if (book.durationToComplete !== undefined && book.durationToComplete !== null) {
+  if (
+    book.durationToComplete !== undefined &&
+    book.durationToComplete !== null
+  ) {
     if (typeof book.durationToComplete !== 'string') {
       return 'durationToComplete must be a string';
     }
@@ -78,7 +89,7 @@ export default class BookController {
     if (!books || !Array.isArray(books) || books.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or missing books array'
+        message: 'Invalid or missing books array',
       });
     }
 
@@ -88,7 +99,7 @@ export default class BookController {
       if (validationError) {
         return res.status(400).json({
           success: false,
-          message: `Validation failed: ${validationError}`
+          message: `Validation failed: ${validationError}`,
         });
       }
     }
@@ -98,12 +109,12 @@ export default class BookController {
       const result = await service.createBookDetails(books);
       return res.status(201).json({
         success: true,
-        data: result
+        data: result,
       });
     } catch (error: any) {
       return res.status(500).json({
         status: 500,
-        error: error.message || error
+        error: error.message || error,
       });
     }
   }
@@ -119,7 +130,7 @@ export default class BookController {
         if (!book || Array.isArray(book)) {
           return res.status(404).json({
             success: false,
-            message: "Book not found",
+            message: 'Book not found',
           });
         }
 
@@ -139,13 +150,13 @@ export default class BookController {
       if (error?.name === 'CastError') {
         return res.status(404).json({
           success: false,
-          message: "Book not found",
+          message: 'Book not found',
         });
       }
       return res.status(500).json({
         success: false,
-        message: "Failed to fetch books",
-        error: error.message || error
+        message: 'Failed to fetch books',
+        error: error.message || error,
       });
     }
   }
@@ -156,7 +167,7 @@ export default class BookController {
       if (!_id) {
         return res.status(400).json({
           success: false,
-          message: "Book _id must be a number",
+          message: 'Book _id must be a number',
         });
       }
 
@@ -165,17 +176,20 @@ export default class BookController {
       if (validationError) {
         return res.status(400).json({
           success: false,
-          message: `Validation failed: ${validationError}`
+          message: `Validation failed: ${validationError}`,
         });
       }
 
       const service = new BookService();
-      const updatedBook = await service.updateBookDetails(_id as string, req.body);
+      const updatedBook = await service.updateBookDetails(
+        _id as string,
+        req.body
+      );
 
       if (!updatedBook) {
         return res.status(404).json({
           success: false,
-          message: "Book not found",
+          message: 'Book not found',
         });
       }
 
@@ -183,17 +197,16 @@ export default class BookController {
         success: true,
         data: updatedBook,
       });
-
     } catch (error: any) {
       if (error?.name === 'CastError') {
         return res.status(404).json({
           success: false,
-          message: "Book not found",
+          message: 'Book not found',
         });
       }
       return res.status(500).json({
         success: false,
-        message: "Failed to update book",
+        message: 'Failed to update book',
       });
     }
   }
@@ -205,7 +218,7 @@ export default class BookController {
       if (!_id) {
         return res.status(400).json({
           success: false,
-          message: "Book _id must be a number",
+          message: 'Book _id must be a number',
         });
       }
 
@@ -215,26 +228,25 @@ export default class BookController {
       if (!deletedBook) {
         return res.status(404).json({
           success: false,
-          message: "Book not found",
+          message: 'Book not found',
         });
       }
 
       return res.status(200).json({
         success: true,
-        message: "Book deleted successfully",
+        message: 'Book deleted successfully',
         data: deletedBook,
       });
-
     } catch (error: any) {
       if (error?.name === 'CastError') {
         return res.status(404).json({
           success: false,
-          message: "Book not found",
+          message: 'Book not found',
         });
       }
       return res.status(500).json({
         success: false,
-        message: "Failed to delete book",
+        message: 'Failed to delete book',
       });
     }
   }

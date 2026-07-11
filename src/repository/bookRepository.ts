@@ -14,14 +14,10 @@ export default class BookRepository {
   }
 
   async updateBook(id: string, updateData: any): Promise<any> {
-    return await Book.findOneAndUpdate(
-      { _id: id },
-      updateData,
-      {
-        new: true,
-        runValidators: true
-      }
-    );
+    return await Book.findOneAndUpdate({ _id: id }, updateData, {
+      new: true,
+      runValidators: true,
+    });
   }
 
   async deleteBook(id: string): Promise<any> {
