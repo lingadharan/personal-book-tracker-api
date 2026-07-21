@@ -26,7 +26,7 @@ export const redirectToGoogle = (req: Request, res: Response): void => {
 export const googleCallback = async (
   req: Request,
   res: Response
-): Promise<any> => {
+): Promise<Response | void> => {
   const { code } = req.query;
 
   if (!code || typeof code !== 'string') {

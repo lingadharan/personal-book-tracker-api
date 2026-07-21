@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import UserService from '../service/userService.js';
 
 export default class UserController {
-  async createUserDetails(req: Request, res: Response): Promise<any> {
+  async createUserDetails(req: Request, res: Response): Promise<Response> {
     const { userName, emailId, password } = req.body;
 
     // Validate request body exists
@@ -46,13 +46,12 @@ export default class UserController {
         success: true,
         data: result,
       });
-    } catch (error) {
-      console.error('Error in UserController.createUserDetails:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
 
       return res.status(500).json({
         success: false,
-        message: 'Failed to create user.',
-        error,
+        message: message,
       });
     }
   }

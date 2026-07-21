@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Document } from 'mongoose';
 
-export interface IBook extends Document {
+export interface IBook {
   title: string;
   author: string;
   currentPage?: number;

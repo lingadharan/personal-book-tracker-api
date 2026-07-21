@@ -1,3 +1,6 @@
+import type { IUpdateBookDetailsDTO } from '../dto/updateBookDetailsRequest.dto.js';
+import { NotFoundError } from '../error/error.js';
+import type { IBook } from '../models/book.js';
 import BookRepository from '../repository/bookRepository.js';
 
 export default class BookService {
@@ -7,42 +10,41 @@ export default class BookService {
     this.bookRepository = new BookRepository();
   }
 
-  async createBookDetails(books: any[]): Promise<any> {
-    try {
-      return await this.bookRepository.createBooks(books);
-    } catch (error) {
-      console.error('Error in BookService.createBookDetails:', error);
-      throw error;
-    }
+  async createBookDetails(books: IBook[]) {
+    return await this.bookRepository.createBooks(books);
   }
 
-  async getBookDetails(id?: string): Promise<any> {
-    try {
-      if (id) {
-        return await this.bookRepository.getBookById(id);
+  async getBookDetails(_id?: string): Promise<IBook | IBook[]> {
+    if (_id) {
+      const getBookByIdRepository = await this.bookRepository.getBookById(_id);
+      if (!getBookByIdRepository) {
+        throw new NotFoundError('Book not found');
       }
-      return await this.bookRepository.getAllBooks();
-    } catch (error) {
-      console.error('Error in BookService.getBookDetails:', error);
-      throw error;
+      return getBookByIdRepository;
     }
+    const getAllBooksRepository = await this.bookRepository.getAllBooks();
+    if (
+      !getAllBooksRepository ||
+      (getAllBooksRepository && getAllBooksRepository.length === 0)
+    ) {
+      throw new NotFoundError('Book not found');
+    }
+    return getAllBooksRepository;
   }
 
-  async updateBookDetails(id: string, updateData: any): Promise<any> {
-    try {
-      return await this.bookRepository.updateBook(id, updateData);
-    } catch (error) {
-      console.error('Error in BookService.updateBookDetails:', error);
-      throw error;
+  async updateBookDetails(updateData: IUpdateBookDetailsDTO): Promise<IBook> {
+    const result = await this.bookRepository.updateBook(updateData);
+    if (!result) {
+      throw new NotFoundError('Book not found');
     }
+    return result;
   }
 
-  async deleteBookDetails(id: string): Promise<any> {
-    try {
-      return await this.bookRepository.deleteBook(id);
-    } catch (error) {
-      console.error('Error in BookService.deleteBookDetails:', error);
-      throw error;
+  async deleteBookDetails(_id: string): Promise<IBook> {
+    const result = await this.bookRepository.deleteBook(_id);
+    if (!result) {
+      throw new NotFoundError('Book not found');
     }
+    return result;
   }
 }
