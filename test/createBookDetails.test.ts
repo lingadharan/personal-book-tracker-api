@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import httpMocks from 'node-mocks-http';
 import type { Request, Response } from 'express';
-import BookController from '../controller/bookcontroller.js';
-import BookService from '../service/bookService.js';
+import BookController from '../src/controller/bookcontroller.js';
+import BookService from '../src/service/bookService.js';
+import { IBook } from '../src/models/book.js';
 
 vi.mock('@/services/bookService');
 
@@ -14,7 +15,7 @@ describe('BookController - createBookDetails', () => {
     vi.clearAllMocks();
   });
 
-  const validBook = {
+  const validBook: IBook = {
     title: 'Atomic Habits',
     author: 'James Clear',
     category: 'reading',
@@ -87,7 +88,7 @@ describe('BookController - createBookDetails', () => {
   it('creates books successfully', async () => {
     vi.spyOn(BookService.prototype, 'createBookDetails').mockResolvedValue([
       {
-        _id: '1',
+        // _id: '1',
         ...validBook,
       },
     ]);

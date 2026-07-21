@@ -1,20 +1,26 @@
 import type { Request, Response } from 'express';
 import BookService from '../service/bookService.js';
+import type IGetBookDetailsRequest from '../dto/getBookDetailsRequest.dto.js';
+import type { IBook } from '../models/book.js';
+import { NotFoundError } from '../error/error.js';
+import type ICreateBookDetailsRequest from '../dto/createBookDetailsRequest.dto.js';
+import type { IUpdateBookDetailsDTO } from '../dto/updateBookDetailsRequest.dto.js';
+import mongoose from 'mongoose';
 
-function validateBook(book: any, isUpdate = false): string | null {
+function validateBook(book: IBook, isUpdate = false): string | null {
   if (!book || typeof book !== 'object') {
     return 'Book data must be an object';
   }
 
-  if (isUpdate) {
-    if (!book._id) {
-      return 'Book _id is required for update';
-    }
-  } else {
-    if (book._id) {
-      return 'Book _id should not be present when creating a book';
-    }
-  }
+  // if (isUpdate) {
+  //   if (!book._id) {
+  //     return 'Book _id is required for update';
+  //   }
+  // } else {
+  //   if (book._id) {
+  //     return 'Book _id should not be present when creating a book';
+  //   }
+  // }
 
   // Required fields: Must be present on creation. If present on update, must be non-empty string.
   if (!isUpdate || book.title !== undefined) {
@@ -83,17 +89,16 @@ function validateBook(book: any, isUpdate = false): string | null {
 }
 
 export default class BookController {
-  async createBookDetails(req: Request, res: Response): Promise<any> {
-    const { books } = req.body;
+  async createBookDetails(req: Request, res: Response): Promise<Response> {
+    const { books } = req.body as ICreateBookDetailsRequest;
 
     if (!books || !Array.isArray(books) || books.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or missing books array',
+        message: 'Invalid or missing books array details.',
       });
     }
 
-    // Validate each book in the array
     for (const book of books) {
       const validationError = validateBook(book, false);
       if (validationError) {
@@ -111,68 +116,58 @@ export default class BookController {
         success: true,
         data: result,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return res.status(500).json({
         status: 500,
-        error: error.message || error,
+        error: 'Internal Server Error',
       });
     }
   }
 
-  async getBookDetails(req: Request, res: Response): Promise<any> {
+  async getBookDetails(req: Request, res: Response): Promise<Response> {
     try {
-      const { _id } = req.query;
+      const { _id } = req.query as IGetBookDetailsRequest;
       const service = new BookService();
 
       if (_id) {
-        const book = await service.getBookDetails(_id as string);
-
-        if (!book || Array.isArray(book)) {
-          return res.status(404).json({
-            success: false,
-            message: 'Book not found',
-          });
-        }
-
+        const book = (await service.getBookDetails(_id)) as IBook;
         return res.status(200).json({
           success: true,
           data: book,
         });
       }
 
-      const books = await service.getBookDetails();
+      const books = (await service.getBookDetails()) as IBook[];
       return res.status(200).json({
         success: true,
-        count: Array.isArray(books) ? books.length : 0,
+        count: books.length,
         data: books,
       });
-    } catch (error: any) {
-      if (error?.name === 'CastError') {
-        return res.status(404).json({
+    } catch (error: unknown) {
+      if (error instanceof NotFoundError) {
+        return res.status(error.statusCode).json({
           success: false,
-          message: 'Book not found',
+          message: error.message,
         });
       }
       return res.status(500).json({
         success: false,
-        message: 'Failed to fetch books',
-        error: error.message || error,
+        message: 'Internal Server Error',
       });
     }
   }
 
-  async updateBookDetails(req: Request, res: Response): Promise<any> {
+  async updateBookDetails(req: Request, res: Response): Promise<Response> {
     try {
-      const { _id } = req.body;
-      if (!_id) {
+      const body = req.body as IUpdateBookDetailsDTO;
+      if (!mongoose.isValidObjectId(body._id)) {
         return res.status(400).json({
           success: false,
-          message: 'Book _id must be a number',
+          message: 'Book _id is required',
         });
       }
 
-      // Validate the update payload
-      const validationError = validateBook(req.body, true);
+      const validationError = validateBook(body as IBook, true);
       if (validationError) {
         return res.status(400).json({
           success: false,
@@ -180,73 +175,64 @@ export default class BookController {
         });
       }
 
-      const service = new BookService();
-      const updatedBook = await service.updateBookDetails(
-        _id as string,
-        req.body
-      );
-
-      if (!updatedBook) {
-        return res.status(404).json({
+      if (!body._id) {
+        return res.status(400).json({
           success: false,
-          message: 'Book not found',
+          message: `Validation failed: _id is required.`,
         });
       }
+
+      const service = new BookService();
+      const updatedBook = await service.updateBookDetails(body);
 
       return res.status(200).json({
         success: true,
         data: updatedBook,
       });
-    } catch (error: any) {
-      if (error?.name === 'CastError') {
-        return res.status(404).json({
+    } catch (error: unknown) {
+      if (error instanceof NotFoundError) {
+        return res.status(error.statusCode).json({
           success: false,
-          message: 'Book not found',
+          message: error.message,
         });
       }
       return res.status(500).json({
         success: false,
-        message: 'Failed to update book',
+        message: 'Internal Server Error',
       });
     }
   }
 
-  async deleteBookDetails(req: Request, res: Response): Promise<any> {
+  async deleteBookDetails(req: Request, res: Response): Promise<Response> {
     try {
       const { _id } = req.query;
 
-      if (!_id) {
+      if (!_id || !mongoose.isValidObjectId(_id)) {
         return res.status(400).json({
           success: false,
-          message: 'Book _id must be a number',
+          message: 'Book _id required',
         });
       }
 
       const service = new BookService();
       const deletedBook = await service.deleteBookDetails(_id as string);
 
-      if (!deletedBook) {
-        return res.status(404).json({
-          success: false,
-          message: 'Book not found',
-        });
-      }
-
       return res.status(200).json({
         success: true,
         message: 'Book deleted successfully',
         data: deletedBook,
       });
-    } catch (error: any) {
-      if (error?.name === 'CastError') {
-        return res.status(404).json({
+    } catch (error: unknown) {
+      if (error instanceof NotFoundError) {
+        return res.status(error.statusCode).json({
           success: false,
-          message: 'Book not found',
+          message: error.message,
         });
       }
+
       return res.status(500).json({
         success: false,
-        message: 'Failed to delete book',
+        message: 'Internal Server Error',
       });
     }
   }
